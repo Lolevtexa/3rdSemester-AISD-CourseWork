@@ -42,16 +42,6 @@ public:
         }
     }
 
-    void updateGrid() {
-        for (int x = 0; x < GRID_WIDTH; x++) {
-            for (int y = 0; y < GRID_HEIGHT; y++) {
-                if (grid[x][y] >= 4) {
-                    topple(x, y);
-                }
-            }
-        }
-    }
-
     void drawGrid(sf::RenderWindow& window) {
         for (int x = 0; x < GRID_WIDTH; x++) {
             for (int y = 0; y < GRID_HEIGHT; y++) {
@@ -94,6 +84,16 @@ private:
         if (y + 1 < GRID_HEIGHT) grid[x][y + 1]++;
         if (x - 1 >= 0) grid[x - 1][y]++;
         if (x + 1 < GRID_WIDTH) grid[x + 1][y]++;
+    }
+
+    void updateGrid() {
+        for (int x = 0; x < GRID_WIDTH; x++) {
+            for (int y = 0; y < GRID_HEIGHT; y++) {
+                if (grid[x][y] >= 4) {
+                    topple(x, y);
+                }
+            }
+        }
     }
 
     sf::Color grad(int value) {
