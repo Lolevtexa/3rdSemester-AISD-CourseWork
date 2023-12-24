@@ -4,7 +4,7 @@
 #include "ToolBar.h"
 #include "Button.h"
 
-class SandPile {
+class SandPile : public sf::Drawable{
 private:
     static const sf::Color background;
     static const sf::Color outline;
@@ -47,8 +47,8 @@ public:
         }
     }
 
-    void drawGrid(sf::RenderWindow& window) {
-        toolBar.draw(window);
+    void draw(sf::RenderTarget& target, sf::RenderStates states) const {
+        target.draw(toolBar, states);
 
         for (int x = 0; x < Constants::GRID_WIDTH; x++) {
             for (int y = 0; y < Constants::GRID_HEIGHT; y++) {
@@ -57,13 +57,13 @@ public:
                 cell.setFillColor(background);
                 cell.setOutlineColor(outline);
                 cell.setOutlineThickness(-0.5f);
-                window.draw(cell);
+                target.draw(cell, states);
 
                 if (grid[x][y] > 0) {
                     sf::CircleShape sand(Constants::CELL_SIZE / 2);
                     sand.setPosition(x * Constants::CELL_SIZE + Constants::TOOL_BAR_WIDTH, y * Constants::CELL_SIZE);
                     sand.setFillColor(grad(grid[x][y]));
-                    window.draw(sand);
+                    target.draw(sand, states);
                 }
             }
         }
@@ -120,7 +120,7 @@ private:
         texture.copyToImage().saveToFile(filename);
     }
 
-    sf::Color grad(int value) {
+    sf::Color grad(int value) const {
         sf::Color color;
         switch (value) {
         case 0:

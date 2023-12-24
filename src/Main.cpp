@@ -20,7 +20,7 @@ int main() {
         }
 
         window.clear();
-        sandPile.drawGrid(window);
+        window.draw(sandPile);
         window.display();
     }
 
