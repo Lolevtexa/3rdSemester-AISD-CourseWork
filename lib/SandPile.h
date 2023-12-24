@@ -18,13 +18,15 @@ private:
 
 public:
     SandPile(sf::RenderWindow& window) {
-        toolBar.addButton("../assets/img/screenshot.png", [this, &window]() {
+        toolBar.addButton("../assets/images/screenshot.png", [this, &window]() {
             saveScreenshot(window);
         });
 
-        toolBar.addButton("../assets/img/clear.png", [this]() {
+        toolBar.addButton("../assets/images/clear.png", [this]() {
             clearGrid();
         });
+
+        toolBar.addNumberSelection();
 
         grid.resize(Constants::GRID_WIDTH, std::vector<int>(Constants::GRID_HEIGHT, 0));
     }
@@ -60,7 +62,7 @@ public:
                 cell.setPosition(x * Constants::CELL_SIZE + Constants::TOOL_BAR_WIDTH, y * Constants::CELL_SIZE);
                 cell.setFillColor(background);
                 cell.setOutlineColor(outline);
-                cell.setOutlineThickness(-0.5f);
+                cell.setOutlineThickness(-1.f);
                 target.draw(cell, states);
 
                 if (grid[x][y] > 0) {
@@ -75,7 +77,7 @@ public:
 
 private:
     void addSand(int x, int y) {
-        grid[x][y]++;
+        grid[x][y] += toolBar.getSandNumber();
     }
 
     void topple(int x, int y) {
