@@ -22,6 +22,10 @@ public:
             saveScreenshot(window);
         });
 
+        toolBar.addButton("../assets/img/clear.png", [this]() {
+            clearGrid();
+        });
+
         grid.resize(Constants::GRID_WIDTH, std::vector<int>(Constants::GRID_HEIGHT, 0));
     }
 
@@ -118,6 +122,14 @@ private:
         texture.create(window.getSize().x, window.getSize().y);
         texture.update(window);
         texture.copyToImage().saveToFile(filename);
+    }
+
+    void clearGrid() {
+        for (int x = 0; x < Constants::GRID_WIDTH; x++) {
+            for (int y = 0; y < Constants::GRID_HEIGHT; y++) {
+                grid[x][y] = 0;
+            }
+        }
     }
 
     sf::Color grad(int value) const {
