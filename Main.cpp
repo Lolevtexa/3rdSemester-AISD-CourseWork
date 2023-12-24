@@ -1,5 +1,6 @@
 #include <SFML/Graphics.hpp>
 #include <vector>
+#include <iostream>
 
 const int WIDTH = 800;
 const int HEIGHT = 800;
@@ -44,7 +45,7 @@ public:
                 cell.setPosition(x * CELL_SIZE, y * CELL_SIZE);
                 cell.setFillColor(background);
                 cell.setOutlineColor(outline);
-                cell.setOutlineThickness(1.0f);
+                cell.setOutlineThickness(-0.5f);
                 window.draw(cell);
 
                 if (grid[x][y] > 0) {
@@ -54,6 +55,17 @@ public:
                     window.draw(sand);
                 }
             }
+        }
+    }
+
+    void saveScreenshot(const std::string& filename, sf::RenderWindow& window) {
+        sf::Texture texture;
+        texture.create(window.getSize().x, window.getSize().y);
+        texture.update(window);
+        if (texture.copyToImage().saveToFile(filename)) {
+            std::cout << "Screenshot saved to " << filename << std::endl;
+        } else {
+            std::cout << "Failed to save screenshot" << std::endl;
         }
     }
 
@@ -115,6 +127,10 @@ int main() {
                 int x = event.mouseButton.x / CELL_SIZE;
                 int y = event.mouseButton.y / CELL_SIZE;
                 sandPile.addSand(x, y);
+            } else if (event.type == sf::Event::KeyPressed) {
+                if (event.key.code == sf::Keyboard::S) {
+                    sandPile.saveScreenshot("screenshot.png", window);
+                }
             }
         }
 
