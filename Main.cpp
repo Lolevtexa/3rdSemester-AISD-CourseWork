@@ -87,7 +87,7 @@ private:
     void addSand(int x, int y) {
         grid[x][y]++;
     }
-    
+
     void topple(int x, int y) {
         grid[x][y] -= 4;
         if (y - 1 >= 0) grid[x][y - 1]++;
@@ -139,13 +139,11 @@ int main() {
     while (window.isOpen()) {
         sf::Event event;
         while (window.pollEvent(event)) {
-            if (event.type == sf::Event::Closed) {
+            if (event.type == sf::Event::Closed || sf::Keyboard::isKeyPressed(sf::Keyboard::Escape)) {
                 window.close();
             }
             sandPile.eventProcessing(event, window);
         }
-
-        sandPile.updateGrid();
 
         window.clear();
         sandPile.drawGrid(window);
