@@ -1,33 +1,121 @@
 #include <SFML/Graphics.hpp>
-#include <vector>
+#include <functional>
 #include <iostream>
+#include <vector>
 
-const int WIDTH = 800;
-const int HEIGHT = 800;
+const int WIDTH = 650;
+const int HEIGHT = 600;
+const int TOOL_BAR_WIDTH = 50;
 const int CELL_SIZE = 10;
 
-const int GRID_WIDTH = WIDTH / CELL_SIZE;
+const int GRID_WIDTH = (WIDTH - TOOL_BAR_WIDTH) / CELL_SIZE;
 const int GRID_HEIGHT = HEIGHT / CELL_SIZE;
+
+class Button {
+private:
+    sf::RectangleShape button;
+    sf::Image icon;
+    sf::Texture texture;
+
+    std::function<void()> eventButtonPressed;
+public:
+    Button(const std::string& filename, int x, int y, int width = 40, int height = 40) {
+        icon.loadFromFile(filename);
+        texture.loadFromImage(icon);
+
+        button.setSize(sf::Vector2f(width, height));
+        button.setPosition(x, y);
+    }
+
+    void eventProcessing(sf::Event event) {
+        if (event.type == sf::Event::MouseButtonPressed) {
+            if (event.mouseButton.button == sf::Mouse::Left) {
+                if (button.getGlobalBounds().contains(event.mouseButton.x, event.mouseButton.y)) {
+                    eventButtonPressed();
+                }
+            }
+        }
+    }
+
+    template<typename Func>
+    void setEventButtonPressed(Func func) {
+        eventButtonPressed = func;
+    }
+
+    void draw(sf::RenderWindow& window) {
+        button.setTexture(&texture);
+        window.draw(button);
+    }
+};
+
+class ToolBar {
+private:
+    static const sf::Color background;
+    static const sf::Color outline;
+
+    std::vector<Button> buttons;
+
+public:
+    template<typename Func>
+    void addButton(const std::string& filename, Func func) {
+        int y = 5 + buttons.size() * 50;
+        Button button(filename, 5, y);
+        button.setEventButtonPressed(func);
+        buttons.push_back(button);
+    }
+
+    void eventProcessing(sf::Event event) {
+        for (Button& button : buttons) {
+            button.eventProcessing(event);
+        }
+    }
+
+    void draw(sf::RenderWindow& window) {
+        sf::RectangleShape toolBar(sf::Vector2f(TOOL_BAR_WIDTH, HEIGHT));
+        toolBar.setPosition(0, 0);
+        toolBar.setFillColor(background);
+        toolBar.setOutlineColor(outline);
+        toolBar.setOutlineThickness(-0.5f);
+        window.draw(toolBar);
+
+        for (Button& button : buttons) {
+            button.draw(window);
+        }
+    }
+};
+
+const sf::Color ToolBar::background = sf::Color(200, 200, 200);
+const sf::Color ToolBar::outline = sf::Color(0, 0, 0);
 
 class SandPile {
 private:
-    std::vector<std::vector<int>> grid;
-
     static const sf::Color background;
     static const sf::Color outline;
     static const sf::Color green;
     static const sf::Color purple;
     static const sf::Color gold;
 
+    ToolBar toolBar;
+
+    std::vector<std::vector<int>> grid;
+
 public:
-    SandPile() {
+    SandPile(sf::RenderWindow& window) {
+        toolBar.addButton("../assets/img/screenshot.png", [this, &window]() {
+            saveScreenshot(window);
+        });
+
         grid.resize(GRID_WIDTH, std::vector<int>(GRID_HEIGHT, 0));
     }
 
     void eventProcessing(sf::Event& event, sf::RenderWindow& window) {
+        toolBar.eventProcessing(event);
+
         if (event.type == sf::Event::MouseButtonPressed) {
             if (event.mouseButton.button == sf::Mouse::Left) {
-                addSand(event.mouseButton.x / CELL_SIZE, event.mouseButton.y / CELL_SIZE);
+                if (event.mouseButton.x >= TOOL_BAR_WIDTH) {
+                    addSand((event.mouseButton.x - TOOL_BAR_WIDTH) / CELL_SIZE, event.mouseButton.y / CELL_SIZE);
+                }
             }
         }
 
@@ -37,16 +125,18 @@ public:
             }
 
             if (event.key.code == sf::Keyboard::S) {
-                saveScreenshot("screenshot.png", window);
+                saveScreenshot(window);
             }
         }
     }
 
     void drawGrid(sf::RenderWindow& window) {
+        toolBar.draw(window);
+
         for (int x = 0; x < GRID_WIDTH; x++) {
             for (int y = 0; y < GRID_HEIGHT; y++) {
                 sf::RectangleShape cell(sf::Vector2f(CELL_SIZE, CELL_SIZE));
-                cell.setPosition(x * CELL_SIZE, y * CELL_SIZE);
+                cell.setPosition(x * CELL_SIZE + TOOL_BAR_WIDTH, y * CELL_SIZE);
                 cell.setFillColor(background);
                 cell.setOutlineColor(outline);
                 cell.setOutlineThickness(-0.5f);
@@ -54,22 +144,11 @@ public:
 
                 if (grid[x][y] > 0) {
                     sf::CircleShape sand(CELL_SIZE / 2);
-                    sand.setPosition(x * CELL_SIZE, y * CELL_SIZE);
+                    sand.setPosition(x * CELL_SIZE + TOOL_BAR_WIDTH, y * CELL_SIZE);
                     sand.setFillColor(grad(grid[x][y]));
                     window.draw(sand);
                 }
             }
-        }
-    }
-
-    void saveScreenshot(const std::string& filename, sf::RenderWindow& window) {
-        sf::Texture texture;
-        texture.create(window.getSize().x, window.getSize().y);
-        texture.update(window);
-        if (texture.copyToImage().saveToFile(filename)) {
-            std::cout << "Screenshot saved to " << filename << std::endl;
-        } else {
-            std::cout << "Failed to save screenshot" << std::endl;
         }
     }
 
@@ -113,6 +192,17 @@ private:
         }
     }
 
+    void saveScreenshot(sf::RenderWindow& window) {
+        std::string filename = "../screenshots/";
+        filename += std::to_string(std::time(nullptr));
+        filename += ".png";
+
+        sf::Texture texture;
+        texture.create(window.getSize().x, window.getSize().y);
+        texture.update(window);
+        texture.copyToImage().saveToFile(filename);
+    }
+
     sf::Color grad(int value) {
         sf::Color color;
         switch (value) {
@@ -150,8 +240,9 @@ const sf::Color SandPile::gold = sf::Color(255, 215, 0);
 int main() {
     sf::RenderWindow window(sf::VideoMode(WIDTH, HEIGHT), "Sandpile Model");
     window.setPosition(sf::Vector2i(0, 0));
+    window.setFramerateLimit(60);
 
-    SandPile sandPile;
+    SandPile sandPile(window);
 
     while (window.isOpen()) {
         sf::Event event;
