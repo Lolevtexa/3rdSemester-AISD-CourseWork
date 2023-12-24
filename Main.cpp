@@ -86,13 +86,30 @@ private:
         if (x + 1 < GRID_WIDTH) grid[x + 1][y]++;
     }
 
-    void updateGrid() {
+    void toppleAll() {
         for (int x = 0; x < GRID_WIDTH; x++) {
             for (int y = 0; y < GRID_HEIGHT; y++) {
                 if (grid[x][y] >= 4) {
                     topple(x, y);
                 }
             }
+        }
+    }
+
+    bool isStable() {
+        for (int x = 0; x < GRID_WIDTH; x++) {
+            for (int y = 0; y < GRID_HEIGHT; y++) {
+                if (grid[x][y] >= 4) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    void updateGrid() {
+        while (!isStable()) {
+            toppleAll();
         }
     }
 
