@@ -127,11 +127,11 @@ private:
             break;
 
         case 2:
-            color = gold;
+            color = purple;
             break;
 
         case 3:
-            color = purple;
+            color = gold;
             break;
         
         default:
