@@ -11,6 +11,8 @@ private:
     static const sf::Color green;
     static const sf::Color purple;
     static const sf::Color gold;
+    
+    sf::RectangleShape sandPile;
 
     ToolBar toolBar;
 
@@ -18,6 +20,10 @@ private:
 
 public:
     SandPile(sf::RenderWindow& window) {
+        sandPile.setPosition(Constants::TOOL_BAR_WIDTH, 0);
+        sandPile.setSize(sf::Vector2f(Constants::WIDTH, Constants::HEIGHT));
+        sandPile.setFillColor(background);
+
         toolBar.addButton("../assets/images/screenshot.png", [this, &window]() {
             saveScreenshot(window);
         });
@@ -55,18 +61,35 @@ public:
 
     void draw(sf::RenderTarget& target, sf::RenderStates states) const {
         target.draw(toolBar, states);
+        target.draw(sandPile, states);
 
+        sf::RectangleShape horizontalLine;
+        horizontalLine.setFillColor(outline);
+        horizontalLine.setPosition(sf::Vector2f(Constants::TOOL_BAR_WIDTH, 0));
+        horizontalLine.setSize(sf::Vector2f(Constants::HEIGHT, 2));
+        for (int i = 0; i <= Constants::GRID_HEIGHT; i++) {
+            float x = horizontalLine.getPosition().x;
+            float y = Constants::CELL_SIZE * i - horizontalLine.getSize().y / 2.f;
+            horizontalLine.setPosition(x, y);
+            target.draw(horizontalLine, states);
+        }
+
+        sf::RectangleShape verticalLine;
+        verticalLine.setFillColor(outline);
+        verticalLine.setPosition(sf::Vector2f(Constants::TOOL_BAR_WIDTH, 0));
+        verticalLine.setSize(sf::Vector2f(2, Constants::HEIGHT));
+        for (int i = 0; i <= Constants::GRID_WIDTH; i++) {
+            float x = Constants::TOOL_BAR_WIDTH + Constants::CELL_SIZE * i - verticalLine.getSize().x / 2.f;
+            float y = verticalLine.getPosition().y;
+            verticalLine.setPosition(x, y);
+            target.draw(verticalLine, states);
+        }
+
+        sf::CircleShape sand;
+        sand.setRadius(Constants::CELL_SIZE / 2);
         for (int x = 0; x < Constants::GRID_WIDTH; x++) {
             for (int y = 0; y < Constants::GRID_HEIGHT; y++) {
-                sf::RectangleShape cell(sf::Vector2f(Constants::CELL_SIZE, Constants::CELL_SIZE));
-                cell.setPosition(x * Constants::CELL_SIZE + Constants::TOOL_BAR_WIDTH, y * Constants::CELL_SIZE);
-                cell.setFillColor(background);
-                cell.setOutlineColor(outline);
-                cell.setOutlineThickness(-1.f);
-                target.draw(cell, states);
-
                 if (grid[x][y] > 0) {
-                    sf::CircleShape sand(Constants::CELL_SIZE / 2);
                     sand.setPosition(x * Constants::CELL_SIZE + Constants::TOOL_BAR_WIDTH, y * Constants::CELL_SIZE);
                     sand.setFillColor(grad(grid[x][y]));
                     target.draw(sand, states);
