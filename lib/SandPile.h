@@ -5,15 +5,21 @@
 class SandPile{
 private:
     std::map<std::pair<int, int>, int> grid;
+    std::set<std::pair<int, int>> unstableCells;
 
 public:
     void addSand(int x, int y, int sandNumber) {
         grid[std::make_pair(x, y)] += sandNumber;
+        if (grid[std::make_pair(x, y)] >= 4) {
+            unstableCells.insert(std::make_pair(x, y));
+        }
     }
 
     void updateGrid() {
-        while (!isStable()) {
-            toppleAll();
+        while (!unstableCells.empty()) {
+            std::pair<int, int> cell = *unstableCells.begin();
+            topple(cell.first, cell.second);
+            unstableCells.erase(cell);
         }
     }
 
@@ -29,27 +35,10 @@ public:
     }
 private:
     void topple(int x, int y) {
-        grid[std::make_pair(x, y)] -= 4;
-        grid[std::make_pair(x, y + 1)]++;
-        grid[std::make_pair(x + 1, y)]++;
-        grid[std::make_pair(x, y - 1)]++;
-        grid[std::make_pair(x - 1, y)]++;
-    }
-
-    void toppleAll() {
-        for (auto& [position, value] : grid) {
-            if (value >= 4) {
-                topple(position.first, position.second);
-            }
-        }
-    }
-
-    bool isStable() {
-        for (const auto& [position, value] : grid) {
-            if (value >= 4) {
-                return false;
-            }
-        }
-        return true;
+        addSand(x, y + 1, grid[std::make_pair(x, y)] / 4);
+        addSand(x + 1, y, grid[std::make_pair(x, y)] / 4);
+        addSand(x, y - 1, grid[std::make_pair(x, y)] / 4);
+        addSand(x - 1, y, grid[std::make_pair(x, y)] / 4);
+        grid[std::make_pair(x, y)] %= 4;
     }
 };
