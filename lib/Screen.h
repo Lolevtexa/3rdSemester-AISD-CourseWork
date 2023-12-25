@@ -26,6 +26,10 @@ public:
         toolBar.addNumberSelection();
     }
 
+    void updateMousePosition(sf::RenderWindow& window) {
+        camera.updateMousePosition(window);
+    }
+
     void eventProcessing(sf::Event& event, sf::RenderWindow& window) {
         toolBar.eventProcessing(event);
         camera.eventProcessing(event);

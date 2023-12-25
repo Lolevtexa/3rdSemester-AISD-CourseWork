@@ -1,6 +1,5 @@
 #pragma once
 #include "Libraries.h"
-#include "Constants.h"
 #include "SandPile.h"
 
 class Camera : public sf::RectangleShape {
@@ -11,9 +10,11 @@ private:
     static const sf::Color purple;
     static const sf::Color gold;
     
-    float cellSize;
-
     SandPile sandPile;
+
+    float cellSize;
+    float scale = 1.f;
+    sf::Vector2f mousePosition;
 
     bool needAddSand = false;
     bool needUpdate = false;
@@ -23,6 +24,12 @@ public:
         setPosition(position);
         setSize(size);
         setFillColor(background);
+    }
+
+    void updateMousePosition(sf::RenderWindow& window) {
+        if (getGlobalBounds().contains(sf::Vector2f(sf::Mouse::getPosition(window)))) {
+            mousePosition = sf::Vector2f(sf::Mouse::getPosition(window));
+        }
     }
 
     void eventProcessing(sf::Event& event) {
@@ -39,14 +46,27 @@ public:
                 needUpdate = true;
             }
         }
+
+        if (event.type == sf::Event::MouseWheelScrolled) {
+            if (getGlobalBounds().contains(sf::Vector2f(event.mouseWheelScroll.x, event.mouseWheelScroll.y))) {
+                if (event.mouseWheelScroll.delta > 0) {
+                    scale *= 1.1f;
+                }
+                else {
+                    scale /= 1.1f;
+                }
+            }
+        }
     }
 
     template<typename Func>
     void update(sf::RenderWindow& window, Func func) {
         if (needAddSand) {
-            sf::Vector2i mousePosition = sf::Mouse::getPosition(window);
-            if (getGlobalBounds().contains(sf::Vector2f(mousePosition.x, mousePosition.y))) {
-                sandPile.addSand((mousePosition.x - getPosition().x) / cellSize, (mousePosition.y - getPosition().y) / cellSize, func());
+            sf::Vector2f globalMousePosition = sf::Vector2f(sf::Mouse::getPosition(window));
+            if (getGlobalBounds().contains(globalMousePosition)) {
+                int x = getGridPosition(sf::Vector2f(globalMousePosition.x - getCellSize() / 2.f, globalMousePosition.y - getCellSize() / 2.f)).x;
+                int y = getGridPosition(sf::Vector2f(globalMousePosition.x - getCellSize() / 2.f, globalMousePosition.y - getCellSize() / 2.f)).y;
+                sandPile.addSand(x, y, func());
             }
             needAddSand = false;
         }
@@ -64,9 +84,9 @@ public:
         horizontalLine.setFillColor(outline);
         horizontalLine.setPosition(getPosition());
         horizontalLine.setSize(sf::Vector2f(getSize().x, 2));
-        for (int i = 0; i <= getSize().y / cellSize; i++) {
+        for (int i = -getSizeScale().y / 2.f; i <= getSizeScale().y / 2.f; i++) {
             float x = horizontalLine.getPosition().x;
-            float y = cellSize * i - horizontalLine.getSize().y / 2.f;
+            float y = getCoordinates(0, i).y - horizontalLine.getSize().y / 2.f;
             horizontalLine.setPosition(x, y);
             target.draw(horizontalLine, states);
         }
@@ -75,19 +95,19 @@ public:
         verticalLine.setFillColor(outline);
         verticalLine.setPosition(getPosition());
         verticalLine.setSize(sf::Vector2f(2, getSize().y));
-        for (int i = 0; i <= getSize().x / cellSize; i++) {
-            float x = Constants::TOOL_BAR_WIDTH + cellSize * i - verticalLine.getSize().x / 2.f;
+        for (int i = -getSizeScale().x / 2.f; i <= getSizeScale().x / 2.f; i++) {
+            float x = getCoordinates(i, 0).x - verticalLine.getSize().x / 2.f;
             float y = verticalLine.getPosition().y;
             verticalLine.setPosition(x, y);
             target.draw(verticalLine, states);
         }
 
         sf::CircleShape sand;
-        sand.setRadius(cellSize / 2);
-        for (int x = 0; x < Constants::GRID_WIDTH; x++) {
-            for (int y = 0; y < Constants::GRID_HEIGHT; y++) {
+        sand.setRadius(getCellSize() / 2);
+        for (int x = -getSizeScale().x / 2.f; x < getSizeScale().x / 2.f; x++) {
+            for (int y = -getSizeScale().y / 2.f; y < getSizeScale().y / 2.f; y++) {
                 if (sandPile.getSandNumber(x, y) > 0) {
-                    sand.setPosition(x * cellSize + Constants::TOOL_BAR_WIDTH, y * cellSize);
+                    sand.setPosition(getCoordinates(x, y).x, getCoordinates(x, y).y);
                     sand.setFillColor(grad(sandPile.getSandNumber(x, y)));
                     target.draw(sand, states);
                 }
@@ -104,6 +124,32 @@ public:
     }
 
 private:
+    float getCellSize() const {
+        return cellSize * scale;
+    }
+
+    sf::Vector2f getSizeScale() const {
+        float x = getSize().x / getCellSize();
+        float y = getSize().y / getCellSize();
+        return sf::Vector2f(x, y);
+    }
+    
+    int round_int( float r ) const {
+        return (r > 0.0) ? (r + 0.5) : (r - 0.5); 
+    }
+    
+    sf::Vector2i getGridPosition(sf::Vector2f _mousePosition) const {
+        int x = round_int(((_mousePosition.x - (getPosition().x + getSize().x / 2.f)) / scale) / cellSize);
+        int y = round_int(((_mousePosition.y - (getPosition().y + getSize().y / 2.f)) / scale) / cellSize);
+        return sf::Vector2i(x, y);
+    }
+
+    sf::Vector2f getCoordinates(int _x, int _y) const {
+        float x = ((float)_x * cellSize) * scale + (getPosition().x + getSize().x / 2.f);
+        float y = ((float)_y * cellSize) * scale + (getPosition().y + getSize().y / 2.f);
+        return sf::Vector2f(x, y);
+    }
+
     void saveScreenshot(sf::RenderWindow& window) {
         std::string filename = "../screenshots/";
         filename += std::to_string(std::time(nullptr));
@@ -148,4 +194,3 @@ const sf::Color Camera::outline = sf::Color(0, 0, 0);
 const sf::Color Camera::green = sf::Color(0, 255, 0);
 const sf::Color Camera::purple = sf::Color(255, 0, 255);
 const sf::Color Camera::gold = sf::Color(255, 215, 0);
-
