@@ -26,16 +26,12 @@ public:
         toolBar.addNumberSelection();
     }
 
-    void updateMousePosition(sf::RenderWindow& window) {
-        camera.updateMousePosition(window);
-    }
-
     void eventProcessing(sf::Event& event, sf::RenderWindow& window) {
         toolBar.eventProcessing(event);
         camera.eventProcessing(event);
 
         if (event.type == sf::Event::KeyPressed) {
-            if (event.key.code == sf::Keyboard::S) {
+            if (event.key.code == sf::Keyboard::P) {
                 saveScreenshot(window);
             }
         }
@@ -48,8 +44,8 @@ public:
     }
 
     void draw(sf::RenderTarget& target, sf::RenderStates states) const {
-        target.draw(toolBar, states);
         target.draw(camera, states);
+        target.draw(toolBar, states);
     }
 
 private:

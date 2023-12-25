@@ -15,9 +15,18 @@ private:
     float cellSize;
     float scale = 1.f;
     sf::Vector2f mousePosition;
+    sf::Vector2f position;
 
     bool needAddSand = false;
-    bool needUpdate = false;
+    bool updateSandPile = false;
+    bool needClearGrid = false;
+    bool updatePosition = false;
+    bool updateScale = false;
+    bool scaleUp = false;
+    bool moveTop = false;
+    bool moveBottom = false;
+    bool moveLeft = false;
+    bool moveRight = false;
 
 public:
     Camera(sf::Vector2f position, sf::Vector2f size, float cellSize) : cellSize(cellSize) {
@@ -26,65 +35,145 @@ public:
         setFillColor(background);
     }
 
-    void updateMousePosition(sf::RenderWindow& window) {
-        if (getGlobalBounds().contains(sf::Vector2f(sf::Mouse::getPosition(window)))) {
-            mousePosition = sf::Vector2f(sf::Mouse::getPosition(window));
-        }
-    }
-
     void eventProcessing(sf::Event& event) {
         if (event.type == sf::Event::MouseButtonPressed) {
-            if (event.mouseButton.button == sf::Mouse::Left) {
+            if (event.mouseButton.button == sf::Mouse::Right) {
                 if (getGlobalBounds().contains(sf::Vector2f(event.mouseButton.x, event.mouseButton.y))) {
                     needAddSand = true;
                 }
+            }
+            if (event.mouseButton.button == sf::Mouse::Left) {
+                if (getGlobalBounds().contains(sf::Vector2f(event.mouseButton.x, event.mouseButton.y))) {
+                    updatePosition = true;
+                }
+            }
+        }
+
+        if (event.type == sf::Event::MouseButtonReleased) {
+            if (event.mouseButton.button == sf::Mouse::Left) {
+                updatePosition = false;
             }
         }
 
         if (event.type == sf::Event::KeyPressed) {
             if (event.key.code == sf::Keyboard::Space) {
-                needUpdate = true;
+                updateSandPile = true;
+            }
+            if (event.key.code == sf::Keyboard::C) {
+                needClearGrid = true;
+            }
+            if (event.key.code == sf::Keyboard::W) {
+                moveTop = true;
+            }
+            if (event.key.code == sf::Keyboard::A) {
+                moveLeft = true;
+            }
+            if (event.key.code == sf::Keyboard::S) {
+                moveBottom = true;
+            }
+            if (event.key.code == sf::Keyboard::D) {
+                moveRight = true;
+            }
+            if (event.key.code == sf::Keyboard::Up) {
+                scaleUp = true;
+                updateScale = true;
+            }
+            if (event.key.code == sf::Keyboard::Down) {
+                scaleUp = false;
+                updateScale = true;
+            }
+        }
+
+        if (event.type == sf::Event::KeyReleased) {
+            if (event.key.code == sf::Keyboard::W) {
+                moveTop = false;
+            }
+            if (event.key.code == sf::Keyboard::A) {
+                moveLeft = false;
+            }
+            if (event.key.code == sf::Keyboard::S) {
+                moveBottom = false;
+            }
+            if (event.key.code == sf::Keyboard::D) {
+                moveRight = false;
             }
         }
 
         if (event.type == sf::Event::MouseWheelScrolled) {
             if (getGlobalBounds().contains(sf::Vector2f(event.mouseWheelScroll.x, event.mouseWheelScroll.y))) {
-                if (event.mouseWheelScroll.delta > 0) {
-                    scale *= 1.1f;
-                }
-                else {
-                    scale /= 1.1f;
-                }
+                updateScale = true;
+                scaleUp = event.mouseWheelScroll.delta > 0;
             }
         }
     }
 
     template<typename Func>
     void update(sf::RenderWindow& window, Func func) {
+        sf::Vector2f globalMousePosition = sf::Vector2f(sf::Mouse::getPosition(window));
+        
+        if (getGlobalBounds().contains(globalMousePosition)) {
+            if (updatePosition) {
+                position += mousePosition - sf::Vector2f(sf::Mouse::getPosition(window));
+            }
+            mousePosition = sf::Vector2f(sf::Mouse::getPosition(window));
+        }
+
         if (needAddSand) {
-            sf::Vector2f globalMousePosition = sf::Vector2f(sf::Mouse::getPosition(window));
             if (getGlobalBounds().contains(globalMousePosition)) {
-                int x = getGridPosition(sf::Vector2f(globalMousePosition.x - getCellSize() / 2.f, globalMousePosition.y - getCellSize() / 2.f)).x;
-                int y = getGridPosition(sf::Vector2f(globalMousePosition.x - getCellSize() / 2.f, globalMousePosition.y - getCellSize() / 2.f)).y;
+                int x = getGridPosition(globalMousePosition - getHalhCellSize()).x;
+                int y = getGridPosition(globalMousePosition - getHalhCellSize()).y;
                 sandPile.addSand(x, y, func());
             }
             needAddSand = false;
         }
 
-        if (needUpdate) {
+        if (needClearGrid) {
+            sandPile.clearGrid();
+            needClearGrid = false;
+        }
+
+        if (updateSandPile) {
             sandPile.updateGrid();
-            needUpdate = false;
+            updateSandPile = false;
+        }
+
+        if (updateScale) {
+            if (scaleUp) {
+                scale *= 1.1f;
+            } else {
+                scale /= 1.1f;
+            }
+            updateScale = false;
+        }
+
+        if (moveTop) {
+            position.y -= 10;
+        }
+
+        if (moveLeft) {
+            position.x -= 10;
+        }
+
+        if (moveBottom) {
+            position.y += 10;
+        }
+
+        if (moveRight) {
+            position.x += 10;
         }
     }
 
     void draw(sf::RenderTarget& target, sf::RenderStates states) const {
         target.draw(static_cast<sf::RectangleShape>(*this), states);
 
+        sf::Vector2i topLeft = getGridPosition(getPosition() - getHalhCellSize());
+        sf::Vector2i bottomRight = getGridPosition(getPosition() + getSize() + getHalhCellSize());
+
         sf::RectangleShape horizontalLine;
         horizontalLine.setFillColor(outline);
         horizontalLine.setPosition(getPosition());
         horizontalLine.setSize(sf::Vector2f(getSize().x, 2));
-        for (int i = -getSizeScale().y / 2.f; i <= getSizeScale().y / 2.f; i++) {
+        for (int i = topLeft.y; i <= bottomRight.y; i++) {
             float x = horizontalLine.getPosition().x;
             float y = getCoordinates(0, i).y - horizontalLine.getSize().y / 2.f;
             horizontalLine.setPosition(x, y);
@@ -95,7 +184,7 @@ public:
         verticalLine.setFillColor(outline);
         verticalLine.setPosition(getPosition());
         verticalLine.setSize(sf::Vector2f(2, getSize().y));
-        for (int i = -getSizeScale().x / 2.f; i <= getSizeScale().x / 2.f; i++) {
+        for (int i = topLeft.x; i <= bottomRight.x; i++) {
             float x = getCoordinates(i, 0).x - verticalLine.getSize().x / 2.f;
             float y = verticalLine.getPosition().y;
             verticalLine.setPosition(x, y);
@@ -104,8 +193,8 @@ public:
 
         sf::CircleShape sand;
         sand.setRadius(getCellSize() / 2);
-        for (int x = -getSizeScale().x / 2.f; x < getSizeScale().x / 2.f; x++) {
-            for (int y = -getSizeScale().y / 2.f; y < getSizeScale().y / 2.f; y++) {
+        for (int x = topLeft.x; x < bottomRight.x; x++) {
+            for (int y = topLeft.y; y < bottomRight.y; y++) {
                 if (sandPile.getSandNumber(x, y) > 0) {
                     sand.setPosition(getCoordinates(x, y).x, getCoordinates(x, y).y);
                     sand.setFillColor(grad(sandPile.getSandNumber(x, y)));
@@ -128,25 +217,23 @@ private:
         return cellSize * scale;
     }
 
-    sf::Vector2f getSizeScale() const {
-        float x = getSize().x / getCellSize();
-        float y = getSize().y / getCellSize();
-        return sf::Vector2f(x, y);
+    sf::Vector2f getHalhCellSize() const {
+        return sf::Vector2f(getCellSize(), getCellSize()) / 2.f;
     }
-    
-    int round_int( float r ) const {
-        return (r > 0.0) ? (r + 0.5) : (r - 0.5); 
+
+    sf::Vector2f getDelta() const {
+        return getPosition() + getSize() / 2.f - position;
     }
     
     sf::Vector2i getGridPosition(sf::Vector2f _mousePosition) const {
-        int x = round_int(((_mousePosition.x - (getPosition().x + getSize().x / 2.f)) / scale) / cellSize);
-        int y = round_int(((_mousePosition.y - (getPosition().y + getSize().y / 2.f)) / scale) / cellSize);
+        int x = std::round((_mousePosition - getDelta()).x / getCellSize());
+        int y = std::round((_mousePosition - getDelta()).y / getCellSize());
         return sf::Vector2i(x, y);
     }
 
     sf::Vector2f getCoordinates(int _x, int _y) const {
-        float x = ((float)_x * cellSize) * scale + (getPosition().x + getSize().x / 2.f);
-        float y = ((float)_y * cellSize) * scale + (getPosition().y + getSize().y / 2.f);
+        float x = (float)_x * getCellSize() + getDelta().x;
+        float y = (float)_y * getCellSize() + getDelta().y;
         return sf::Vector2f(x, y);
     }
 

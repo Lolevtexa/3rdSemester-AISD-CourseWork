@@ -11,8 +11,6 @@ int main() {
     Screen screen(Constants::TOOL_BAR_WIDTH, sf::Vector2f(Constants::WIDTH, Constants::HEIGHT), window);
 
     while (window.isOpen()) {
-        screen.updateMousePosition(window);
-
         sf::Event event;
         while (window.pollEvent(event)) {
             if (event.type == sf::Event::Closed || sf::Keyboard::isKeyPressed(sf::Keyboard::Escape)) {
