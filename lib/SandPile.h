@@ -7,9 +7,6 @@ private:
     std::map<std::pair<int, int>, int> grid;
 
 public:
-    SandPile() {
-    }
-    
     void addSand(int x, int y, int sandNumber) {
         grid[std::make_pair(x, y)] += sandNumber;
     }
