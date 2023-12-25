@@ -19,6 +19,10 @@ public:
             camera.clearGrid();
         });
 
+        toolBar.addButton("../assets/images/update.png", [this]() {
+            camera.updateGrid();
+        });
+
         toolBar.addNumberSelection();
     }
 

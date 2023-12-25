@@ -99,6 +99,10 @@ public:
         sandPile.clearGrid();
     }
 
+    void updateGrid() {
+        sandPile.updateGrid();
+    }
+
 private:
     void saveScreenshot(sf::RenderWindow& window) {
         std::string filename = "../screenshots/";
