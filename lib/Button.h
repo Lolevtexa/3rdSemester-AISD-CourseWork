@@ -26,6 +26,15 @@ public:
         loadSprite(unpressedAlpha);
     }
 
+    Button(const Button & other) :
+            filename(other.filename),
+            eventButtonPressed(other.eventButtonPressed),
+            button(other.button),
+            icon(other.icon),
+            texture(other.texture) {
+        button.setTexture(&texture);
+    }
+
     void eventProcessing(sf::Event event) {
         if (event.type == sf::Event::MouseButtonPressed) {
             if (event.mouseButton.button == sf::Mouse::Left) {
