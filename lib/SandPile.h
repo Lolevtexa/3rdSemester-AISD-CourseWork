@@ -4,15 +4,14 @@
 
 class SandPile{
 private:
-    std::vector<std::vector<int>> grid;
+    std::map<std::pair<int, int>, int> grid;
 
 public:
-    SandPile(int width, int height) {
-        grid.resize(width, std::vector<int>(height, 0));
+    SandPile() {
     }
     
     void addSand(int x, int y, int sandNumber) {
-        grid[x][y] += sandNumber;
+        grid[std::make_pair(x, y)] += sandNumber;
     }
 
     void updateGrid() {
@@ -22,41 +21,36 @@ public:
     }
 
     void clearGrid() {
-        for (int x = 0; x < grid.size(); x++) {
-            for (int y = 0; y < grid[x].size(); y++) {
-                grid[x][y] = 0;
-            }
-        }
+        grid.clear();
     }
 
     int getSandNumber(int x, int y) const {
-        return grid[x][y];
+        if (grid.find(std::make_pair(x, y)) == grid.end()) {
+            return 0;
+        } 
+        return grid.at(std::make_pair(x, y));
     }
 private:
     void topple(int x, int y) {
-        grid[x][y] -= 4;
-        if (y - 1 >= 0) grid[x][y - 1]++;
-        if (y + 1 < grid[x].size()) grid[x][y + 1]++;
-        if (x - 1 >= 0) grid[x - 1][y]++;
-        if (x + 1 < grid.size()) grid[x + 1][y]++;
+        grid[std::make_pair(x, y)] -= 4;
+        grid[std::make_pair(x, y + 1)]++;
+        grid[std::make_pair(x + 1, y)]++;
+        grid[std::make_pair(x, y - 1)]++;
+        grid[std::make_pair(x - 1, y)]++;
     }
 
     void toppleAll() {
-        for (int x = 0; x < grid.size(); x++) {
-            for (int y = 0; y < grid[x].size(); y++) {
-                if (grid[x][y] >= 4) {
-                    topple(x, y);
-                }
+        for (auto& [position, value] : grid) {
+            if (value >= 4) {
+                topple(position.first, position.second);
             }
         }
     }
 
     bool isStable() {
-        for (int x = 0; x < grid.size(); x++) {
-            for (int y = 0; y < grid[x].size(); y++) {
-                if (grid[x][y] >= 4) {
-                    return false;
-                }
+        for (const auto& [position, value] : grid) {
+            if (value >= 4) {
+                return false;
             }
         }
         return true;

@@ -19,7 +19,7 @@ private:
     bool needUpdate = false;
 
 public:
-    Camera(sf::Vector2f position, sf::Vector2f size, float cellSize) : cellSize(cellSize), sandPile(int(size.x / cellSize), int(size.y / cellSize)) {
+    Camera(sf::Vector2f position, sf::Vector2f size, float cellSize) : cellSize(cellSize) {
         setPosition(position);
         setSize(size);
         setFillColor(background);
