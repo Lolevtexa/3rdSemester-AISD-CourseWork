@@ -34,6 +34,10 @@ public:
         toolBar.addButton("../assets/images/rectangle.png", [this]() {
             camera.setShape(RECTANGLE);
         });
+
+        toolBar.addButton("../assets/images/hexagon.png", [this]() {
+            camera.setShape(HEXAGON);
+        });
     }
 
     void eventProcessing(sf::Event& event, sf::RenderWindow& window) {

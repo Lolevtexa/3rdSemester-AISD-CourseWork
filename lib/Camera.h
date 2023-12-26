@@ -4,7 +4,8 @@
 
 enum CellShape {
     TRIANGLE,
-    RECTANGLE
+    RECTANGLE,
+    HEXAGON
 };
 
 class Camera : 
@@ -18,6 +19,8 @@ private:
     
     Sandpile triangleSandpile;
     Sandpile rectangleSandpile;
+    Sandpile hexagonSandpile;
+
     CellShape cellShape;
 
     float cellSize;
@@ -40,7 +43,8 @@ public:
     Camera(sf::Vector2f position, sf::Vector2f size, float cellSize) : 
         cellSize(cellSize),
         triangleSandpile({{1, 0}, {-1, 0}, {0, 1}}, {{1, 0}, {-1, 0}, {0, -1}}),
-        rectangleSandpile({{1, 0}, {0, 1}, {-1, 0}, {0, -1}}) {
+        rectangleSandpile({{1, 0}, {0, 1}, {-1, 0}, {0, -1}}), 
+        hexagonSandpile({{0, -1}, {1, 0}, {1, 1}, {0, 1}, {-1, 1}, {-1, 0}}) {
         setPosition(position);
         setSize(size);
         setFillColor(background);
@@ -55,6 +59,8 @@ public:
             triangleSandpile.clearGrid();
         } else if (cellShape == RECTANGLE) {
             rectangleSandpile.clearGrid();
+        } else if (cellShape == HEXAGON) {
+            hexagonSandpile.clearGrid();
         }
     }
 
@@ -63,6 +69,8 @@ public:
             triangleSandpile.updateGrid();
         } else if (cellShape == RECTANGLE) {
             rectangleSandpile.updateGrid();
+        } else if (cellShape == HEXAGON) {
+            hexagonSandpile.updateGrid();
         }
     }
 
@@ -73,6 +81,7 @@ public:
                     needAddSand = true;
                 }
             }
+
             if (event.mouseButton.button == sf::Mouse::Left) {
                 if (getGlobalBounds().contains(sf::Vector2f(event.mouseButton.x, event.mouseButton.y))) {
                     updatePosition = true;
@@ -199,6 +208,8 @@ public:
             drawTriangleSandpile(target, states);
         } else if (cellShape == RECTANGLE) {
             drawRectangleSandpile(target, states);
+        } else if (cellShape == HEXAGON) {
+            drawHexagonSandpile(target, states);
         }
     }
 
@@ -214,6 +225,25 @@ private:
         float CA = (C.x - P.x) * (A.y - P.y) - (A.x - P.x) * (C.y - P.y);
 
         return (AB >= 0 && BC >= 0 && CA >= 0) || (AB <= 0 && BC <= 0 && CA <= 0);
+    }
+
+    bool containsHexagon(sf::ConvexShape hexagon, sf::Vector2f point) const {
+        sf::Vector2f A = hexagon.getPoint(0) + hexagon.getPosition();
+        sf::Vector2f B = hexagon.getPoint(1) + hexagon.getPosition();
+        sf::Vector2f C = hexagon.getPoint(2) + hexagon.getPosition();
+        sf::Vector2f D = hexagon.getPoint(3) + hexagon.getPosition();
+        sf::Vector2f E = hexagon.getPoint(4) + hexagon.getPosition();
+        sf::Vector2f F = hexagon.getPoint(5) + hexagon.getPosition();
+        sf::Vector2f P = point;
+
+        float AB = (A.x - P.x) * (B.y - P.y) - (B.x - P.x) * (A.y - P.y);
+        float BC = (B.x - P.x) * (C.y - P.y) - (C.x - P.x) * (B.y - P.y);
+        float CD = (C.x - P.x) * (D.y - P.y) - (D.x - P.x) * (C.y - P.y);
+        float DE = (D.x - P.x) * (E.y - P.y) - (E.x - P.x) * (D.y - P.y);
+        float EF = (E.x - P.x) * (F.y - P.y) - (F.x - P.x) * (E.y - P.y);
+        float FA = (F.x - P.x) * (A.y - P.y) - (A.x - P.x) * (F.y - P.y);
+
+        return (AB >= 0 && BC >= 0 && CD >= 0 && DE >= 0 && EF >= 0 && FA >= 0) || (AB <= 0 && BC <= 0 && CD <= 0 && DE <= 0 && EF <= 0 && FA <= 0);
     }
 
     void addSand(sf::Vector2f globalMousePosition, int sandNumber) {
@@ -251,6 +281,58 @@ private:
             int y = pointToRectangleGrid(globalMousePosition).y;
             
             rectangleSandpile.addSand(x, y, sandNumber);
+        } else if (cellShape == HEXAGON) {
+            sf::ConvexShape hexagon = setHexagon();
+
+            int x = pointToHexagonGrid(globalMousePosition).x;
+            int y = pointToHexagonGrid(globalMousePosition).y;
+            if (x % 2 == 0) {
+                hexagon.setPosition(hexagonGridToPoint(x, y));
+                if (!containsHexagon(hexagon, globalMousePosition)) {
+                    hexagon.setPosition(hexagonGridToPoint(x + 1, y) - sf::Vector2f(0, getHexagonCell().y / 2.f));
+                    if (containsHexagon(hexagon, globalMousePosition)) {
+                        x++;
+                    } else {
+                        hexagon.setPosition(hexagonGridToPoint(x - 1, y) - sf::Vector2f(0, getHexagonCell().y / 2.f));
+                        if (containsHexagon(hexagon, globalMousePosition)) {
+                            x--;
+                        } else {
+                            hexagon.setPosition(hexagonGridToPoint(x + 1, y + 1) - sf::Vector2f(0, getHexagonCell().y / 2.f));
+                            if (containsHexagon(hexagon, globalMousePosition)) {
+                                x++;
+                                y++;
+                            } else {
+                                x--;
+                                y++;
+                            }
+                        }
+                    }
+                }
+            } else {
+                hexagon.setPosition(hexagonGridToPoint(x, y));
+                if (!containsHexagon(hexagon, globalMousePosition - sf::Vector2f(0, getHexagonCell().y / 2.f))) {
+                    hexagon.setPosition(hexagonGridToPoint(x + 1, y));
+                    if (containsHexagon(hexagon, globalMousePosition)) {
+                        x++;
+                    } else {
+                        hexagon.setPosition(hexagonGridToPoint(x - 1, y));
+                        if (containsHexagon(hexagon, globalMousePosition)) {
+                            x--;
+                        } else {
+                            hexagon.setPosition(hexagonGridToPoint(x + 1, y - 1));
+                            if (containsHexagon(hexagon, globalMousePosition)) {
+                                x++;
+                                y--;
+                            } else {
+                                x--;
+                                y--;
+                            }
+                        }
+                    }
+                }
+            }
+
+            hexagonSandpile.addSand(x, y, sandNumber);
         }
     }
 
@@ -370,9 +452,9 @@ private:
             for (int y = topLeft.y; y < bottomRight.y; y++) {
                 if (triangleSandpile.getSandNumber(x, y) > 0) {
                     if ((x + y) % 2 == 0) {
-                        dy = sandRadiusWithTriangleCell() - sandRadiusWithTriangleCell() / 2.f;
+                        dy = sandRadiusWithTriangleCell() / 2.f;
                     } else {
-                        dy = sandRadiusWithTriangleCell() + sandRadiusWithTriangleCell() / 2.f;
+                        dy = sandRadiusWithTriangleCell() * 3.f / 2.f;
                     }
                     sand.setPosition(triangleGridToPoint(x, y) - sf::Vector2f(dx, dy));
                     sand.setFillColor(grad(triangleSandpile.getSandNumber(x, y)));
@@ -417,8 +499,8 @@ private:
     void drawRectangleSandpile(sf::RenderTarget& target, sf::RenderStates states) const {
         sf::ConvexShape rectangle = setRectangle();
 
-        sf::Vector2i topLeft = pointToRectangleGrid(getPosition() - getRectangleCell() / 2.f);
-        sf::Vector2i bottomRight = pointToRectangleGrid(getPosition() + getSize() + getRectangleCell() / 2.f);
+        sf::Vector2i topLeft = pointToRectangleGrid(getPosition() - getRectangleCell());
+        sf::Vector2i bottomRight = pointToRectangleGrid(getPosition() + getSize() + getRectangleCell());
 
         for (int x = topLeft.x; x < bottomRight.x; x++) {
             for (int y = topLeft.y; y < bottomRight.y; y++) {
@@ -435,6 +517,77 @@ private:
                 if (rectangleSandpile.getSandNumber(x, y) > 0) {
                     sand.setPosition(rectangleGridToPoint(x, y) - sf::Vector2f(dx, dy));
                     sand.setFillColor(grad(rectangleSandpile.getSandNumber(x, y)));
+                    target.draw(sand, states);
+                }
+            }
+        }
+    }
+
+    sf::ConvexShape setHexagon() const {
+        sf::ConvexShape hexagon(6);
+        hexagon.setPoint(0, sf::Vector2f(-getHexagonCell().x / 3.f, -getHexagonCell().y / 2.f));
+        hexagon.setPoint(1, sf::Vector2f(getHexagonCell().x / 3.f, -getHexagonCell().y / 2.f));
+        hexagon.setPoint(2, sf::Vector2f(getHexagonCell().x * 2.f / 3.f, 0));
+        hexagon.setPoint(3, sf::Vector2f(getHexagonCell().x  / 3.f, getHexagonCell().y / 2.f));
+        hexagon.setPoint(4, sf::Vector2f(-getHexagonCell().x / 3.f, getHexagonCell().y / 2.f));
+        hexagon.setPoint(5, sf::Vector2f(-getHexagonCell().x * 2.f / 3.f, 0));
+        hexagon.setFillColor(background);
+        hexagon.setOutlineColor(outline);
+        hexagon.setOutlineThickness(-1.f);
+        return hexagon;
+    }
+
+    sf::Vector2f getHexagonCell() const {
+        return sf::Vector2f(cellSize * scale * 3.f / 2.f, cellSize * scale * sqrt(3));
+    }
+
+    sf::Vector2i pointToHexagonGrid(sf::Vector2f point) const {
+        int x = std::round((point - delta()).x / getHexagonCell().x);
+        int y = std::round((point - delta()).y / getHexagonCell().y);
+        return sf::Vector2i(x, y);
+    }
+
+    sf::Vector2f hexagonGridToPoint(int _x, int _y) const {
+        float x = (float)_x * getHexagonCell().x + delta().x;
+        float y = (float)_y * getHexagonCell().y + delta().y;
+        return sf::Vector2f(x, y);
+    }
+
+    float sandRadiusWithHexagonCell() const {
+        return cellSize * scale * sqrt(3) / 2.f;
+    }
+
+    void drawHexagonSandpile(sf::RenderTarget& target, sf::RenderStates states) const {
+        sf::ConvexShape hexagon = setHexagon();
+
+        sf::Vector2i topLeft = pointToHexagonGrid(getPosition() - getHexagonCell());
+        sf::Vector2i bottomRight = pointToHexagonGrid(getPosition() + getSize() + getHexagonCell());
+
+        for (int x = topLeft.x; x < bottomRight.x; x++) {
+            for (int y = topLeft.y; y < bottomRight.y; y++) {
+                if (x % 2 == 0) {
+                    hexagon.setPosition(hexagonGridToPoint(x, y));
+                    target.draw(hexagon, states);
+                } else {
+                    hexagon.setPosition(hexagonGridToPoint(x, y) - sf::Vector2f(0, getHexagonCell().y / 2.f));
+                    target.draw(hexagon, states);
+                }
+            }
+        }
+
+        sf::CircleShape sand(sandRadiusWithHexagonCell());
+        float dx = sandRadiusWithHexagonCell();
+        float dy = sandRadiusWithHexagonCell();
+        for (int x = topLeft.x; x < bottomRight.x; x++) {
+            for (int y = topLeft.y; y < bottomRight.y; y++) {
+                if (hexagonSandpile.getSandNumber(x, y) > 0) {
+                    if (x % 2 == 0) {
+                        dy = sandRadiusWithHexagonCell();
+                    } else {
+                        dy = sandRadiusWithHexagonCell() * 2.f;
+                    }
+                    sand.setPosition(hexagonGridToPoint(x, y) - sf::Vector2f(dx, dy));
+                    sand.setFillColor(grad(hexagonSandpile.getSandNumber(x, y)));
                     target.draw(sand, states);
                 }
             }
