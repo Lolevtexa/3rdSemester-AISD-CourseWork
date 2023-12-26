@@ -31,7 +31,8 @@ private:
 
 public:
     Camera(sf::Vector2f position, sf::Vector2f size, float cellSize) : 
-        cellSize(cellSize) {
+        cellSize(cellSize),
+        sandpile({{1, 0}, {0, 1}, {-1, 0}, {0, -1}}) {
         setPosition(position);
         setSize(size);
         setFillColor(background);

@@ -7,10 +7,16 @@ private:
     std::map<std::pair<int, int>, int> grid;
     std::set<std::pair<int, int>> unstableCells;
 
+    std::vector<std::pair<int, int>> neighbors;
+
 public:
+    Sandpile(std::vector<std::pair<int, int>> neighbors) :
+        neighbors(neighbors) {
+    }
+
     void addSand(int x, int y, int sandNumber) {
         grid[std::make_pair(x, y)] += sandNumber;
-        if (grid[std::make_pair(x, y)] >= 4) {
+        if (grid[std::make_pair(x, y)] >= neighbors.size()) {
             unstableCells.insert(std::make_pair(x, y));
         }
     }
@@ -33,13 +39,13 @@ public:
         } 
         return grid.at(std::make_pair(x, y));
     }
-    
+
 private:
     void topple(int x, int y) {
-        addSand(x, y + 1, grid[std::make_pair(x, y)] / 4);
-        addSand(x + 1, y, grid[std::make_pair(x, y)] / 4);
-        addSand(x, y - 1, grid[std::make_pair(x, y)] / 4);
-        addSand(x - 1, y, grid[std::make_pair(x, y)] / 4);
-        grid[std::make_pair(x, y)] %= 4;
+        for (std::pair<int, int> neighbor : neighbors) {
+            addSand(x + neighbor.first, y + neighbor.second, grid[std::make_pair(x, y)] / neighbors.size());
+        }
+
+        grid[std::make_pair(x, y)] %= neighbors.size();
     }
 };
