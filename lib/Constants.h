@@ -24,11 +24,7 @@ public:
 
 const sf::Font Constants::NUMBER_SELECTION_FONT = []() {
     sf::Font font;
-    if (font.loadFromFile("../assets/fonts/Arial.ttf")) {
-        std::cout << "Font loaded successfully" << std::endl;
-    } else {
-        std::cout << "Font failed to load" << std::endl;
-    }
+    font.loadFromFile("../assets/fonts/Arial.ttf");
     return font;
 }();
 

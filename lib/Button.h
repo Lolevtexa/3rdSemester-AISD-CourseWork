@@ -8,14 +8,15 @@ private:
     static const int unpressedAlpha = 127;
     static const int pressedAlpha = 255;
 
-    std::string filename; 
+    std::string filename;
+    bool isActive = false;
 
     sf::RectangleShape button;
     sf::Image icon;
     sf::Texture texture;
 
     std::function<void()> eventButtonPressed;
-    
+
 public:
     template<typename Func>
     Button(const std::string& filename, int x, int y, Func func) {
@@ -47,11 +48,18 @@ public:
         } else if (event.type == sf::Event::MouseButtonReleased) {
             if (event.mouseButton.button == sf::Mouse::Left) {
                 if (button.getGlobalBounds().contains(event.mouseButton.x, event.mouseButton.y)) {
-                    eventButtonPressed();
+                    isActive = true;
                 }
 
                 loadSprite(unpressedAlpha);
             }
+        }
+    }
+
+    void update() {
+        if (isActive) {
+            eventButtonPressed();
+            isActive = false;
         }
     }
 

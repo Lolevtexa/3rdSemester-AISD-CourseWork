@@ -2,6 +2,7 @@
 #include "Libraries.h"
 #include "Constants.h"
 #include "Button.h"
+#include "Toggle.h"
 #include "NumberSelection.h"
 
 class ToolBar : 
@@ -13,6 +14,7 @@ private:
     sf::RectangleShape toolBar;
 
     std::vector<Button> buttons;
+    std::vector<Toggle> toggles;
     std::vector<NumberSelection> numberSelections;
 
 public:
@@ -26,12 +28,18 @@ public:
 
     template<typename Func>
     void addButton(const std::string& filename, Func func) {
-        int y = Constants::TOOL_BAR_ICON_OUTLINE + (numberSelections.size() + buttons.size()) * Constants::TOOL_BAR_WIDTH;
+        int y = getToolBarHeight();
         buttons.push_back(Button(filename, Constants::TOOL_BAR_ICON_OUTLINE, y, func));
     }
 
+    template<typename Func>
+    void addToggle(const std::string& filename, Func func) {
+        int y = getToolBarHeight();
+        toggles.push_back(Toggle(filename, Constants::TOOL_BAR_ICON_OUTLINE, y, func));
+    }   
+
     void addNumberSelection() {
-        int y = Constants::TOOL_BAR_ICON_OUTLINE + (numberSelections.size() + buttons.size()) * Constants::TOOL_BAR_WIDTH;
+        int y = getToolBarHeight();
         numberSelections.push_back(NumberSelection(Constants::TOOL_BAR_ICON_OUTLINE, y));
     }
 
@@ -44,8 +52,26 @@ public:
             button.eventProcessing(event);
         }
 
+        for (Toggle& toggle : toggles) {
+            toggle.eventProcessing(event);
+        }
+
         for (NumberSelection& numberSelection : numberSelections) {
             numberSelection.eventProcessing(event);
+        }
+    }
+
+    void update() {
+        for (Button& button : buttons) {
+            button.update();
+        }
+
+        for (Toggle& toggle : toggles) {
+            toggle.update();
+        }
+
+        for (NumberSelection& numberSelection : numberSelections) {
+            numberSelection.update();
         }
     }
 
@@ -56,9 +82,30 @@ public:
             target.draw(button, states);
         }
 
+        for (const Toggle& toggle : toggles) {
+            target.draw(toggle, states);
+        }
+
         for (const NumberSelection& numberSelection : numberSelections) {
             target.draw(numberSelection, states);
         }
+    }
+
+private:
+    int getButtonsHeight() {
+        return buttons.size() * Constants::TOOL_BAR_WIDTH;
+    }
+
+    int getTogglesHeight() {
+        return toggles.size() * Constants::TOOL_BAR_WIDTH;
+    }
+
+    int getNumberSelectionsHeight() {
+        return numberSelections.size() * Constants::TOOL_BAR_WIDTH;
+    }
+
+    int getToolBarHeight() {
+        return Constants::TOOL_BAR_ICON_OUTLINE + getButtonsHeight() + getTogglesHeight() + getNumberSelectionsHeight();
     }
 };
 

@@ -15,6 +15,9 @@ private:
     int minNumber;
     int maxNumber;
 
+    bool upNumber = false;
+    bool downNumber = false;
+
 public:
     NumberSelection(int x, int y, int defaultNumber = 1, int minNumber = 1, int maxNumber = 1000) : 
         number(defaultNumber), 
@@ -37,20 +40,30 @@ public:
         if (event.type == sf::Event::MouseButtonPressed) {
             if (event.mouseButton.button == sf::Mouse::Left) {
                 if (numberSelection.getGlobalBounds().contains(event.mouseButton.x, event.mouseButton.y)) {
-                    number = spiner(number + 1);
-                    numberText.setString(std::to_string(number));
-                    int x = numberSelection.getPosition().x;
-                    int y = numberSelection.getPosition().y;
-                    numberText.setPosition(getCenter());
+                    upNumber = true;
                 }
             }
             if (event.mouseButton.button == sf::Mouse::Right) {
                 if (numberSelection.getGlobalBounds().contains(event.mouseButton.x, event.mouseButton.y)) {
-                    number = spiner(number - 1);
-                    numberText.setString(std::to_string(number));
-                    numberText.setPosition(getCenter());
+                    downNumber = true;
                 }
             }
+        }
+    }
+
+    void update() {
+        if (upNumber) {
+            number = spiner(number + 1);
+            numberText.setString(std::to_string(number));
+            numberText.setPosition(getCenter());
+            upNumber = false;
+        }
+
+        if (downNumber) {
+            number = spiner(number - 1);
+            numberText.setString(std::to_string(number));
+            numberText.setPosition(getCenter());
+            downNumber = false;
         }
     }
 

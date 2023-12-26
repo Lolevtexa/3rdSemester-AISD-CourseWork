@@ -21,7 +21,7 @@ public:
             camera.clearGrid();
         });
 
-        toolBar.addButton("../assets/images/update.png", [this]() {
+        toolBar.addToggle("../assets/images/update.png", [this]() {
             camera.updateGrid();
         });
 
@@ -48,6 +48,8 @@ public:
     }
 
     void update(sf::RenderWindow& window) {
+        toolBar.update();
+
         camera.update(window, [this]() {
             return toolBar.getSandNumber();
         });
