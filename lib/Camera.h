@@ -16,6 +16,9 @@ private:
     static const sf::Color green;
     static const sf::Color purple;
     static const sf::Color gold;
+    static const sf::Color red;
+    static const sf::Color blue;
+    static const sf::Color black;
     
     Sandpile triangleSandpile;
     Sandpile rectangleSandpile;
@@ -347,31 +350,56 @@ private:
         texture.copyToImage().saveToFile(filename);
     }
 
-    sf::Color grad(int value) const {
-        sf::Color color;
-        switch (value) {
-        case 0:
-            color = background;
-            break;
-
-        case 1:
-            color = green;
-            break;
-
-        case 2:
-            color = purple;
-            break;
-
-        case 3:
-            color = gold;
-            break;
-        
-        default:
-            color = outline;
-            break;
+    sf::Color gradTriangle(int value) const {
+        if (value == 0) {
+            return background;
+        } else if (value == 1) {
+            return purple;
+        } else if (value == 2) {
+            return gold;
         }
+        return black;
+    }
 
-        return color;
+    sf::Color gradRectangle(int value) const {
+        if (value == 0) {
+            return background;
+        } else if (value == 1) {
+            return green;
+        } else if (value == 2) {
+            return purple;
+        } else if (value == 3) {
+            return gold;
+        }
+        return black;
+    }
+
+    sf::Color gradHexagon(int value) const {
+        if (value == 0) {
+            return background;
+        } else if (value == 1) {
+            return green;
+        } else if (value == 2) {
+            return purple;
+        } else if (value == 3) {
+            return gold;
+        } else if (value == 4) {
+            return red;
+        } else if (value == 5) {
+            return blue;
+        }
+        return black;
+    }
+
+    sf::Color grad(int value) const {
+        if (cellShape == TRIANGLE) {
+            return gradTriangle(value);
+        } else if (cellShape == RECTANGLE) {
+            return gradRectangle(value);
+        } else if (cellShape == HEXAGON) {
+            return gradHexagon(value);
+        }
+        return black;
     }
     
     sf::Vector2f delta() const {
@@ -600,3 +628,6 @@ const sf::Color Camera::outline = sf::Color(0, 0, 0);
 const sf::Color Camera::green = sf::Color(0, 255, 0);
 const sf::Color Camera::purple = sf::Color(255, 0, 255);
 const sf::Color Camera::gold = sf::Color(255, 215, 0);
+const sf::Color Camera::red = sf::Color(255, 0, 0);
+const sf::Color Camera::blue = sf::Color(0, 0, 255);
+const sf::Color Camera::black = sf::Color(0, 0, 0);
