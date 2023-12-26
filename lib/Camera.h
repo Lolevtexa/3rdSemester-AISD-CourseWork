@@ -45,9 +45,13 @@ private:
 public:
     Camera(sf::Vector2f position, sf::Vector2f size, float cellSize) : 
         cellSize(cellSize),
-        triangleSandpile({{1, 0}, {-1, 0}, {0, 1}}, {{1, 0}, {-1, 0}, {0, -1}}),
+        triangleSandpile({{1, 0}, {-1, 0}, {0, 1}}, {{1, 0}, {-1, 0}, {0, -1}}, [this](int& x, int& y) {
+            return (x + y) % 2 == 0;
+        }),
         rectangleSandpile({{1, 0}, {0, 1}, {-1, 0}, {0, -1}}), 
-        hexagonSandpile({{0, -1}, {1, 0}, {1, 1}, {0, 1}, {-1, 1}, {-1, 0}}) {
+        hexagonSandpile({{0, -1}, {1, 0}, {1, 1}, {0, 1}, {-1, 1}, {-1, 0}}, {{0, -1}, {1, 0}, {1, -1}, {0, 1}, {-1, -1}, {-1, 0}}, [this](int& x, int& y) {
+            return x % 2 == 0;
+        }) {
         setPosition(position);
         setSize(size);
         setFillColor(background);

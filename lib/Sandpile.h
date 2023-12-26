@@ -15,6 +15,7 @@ private:
     std::vector<std::pair<int, int>> bottomNeighbors;
 
     bool oriented;
+    std::function<bool(int&, int&)> f;
 
 public:
     Sandpile(std::vector<std::pair<int, int>> neighbors) :
@@ -23,9 +24,11 @@ public:
         oriented = false;
     }
 
-    Sandpile(std::vector<std::pair<int, int>> topNeighbors, std::vector<std::pair<int, int>> bottomNeighbors) :
+    template<typename Func>
+    Sandpile(std::vector<std::pair<int, int>> topNeighbors, std::vector<std::pair<int, int>> bottomNeighbors, Func func) :
         topNeighbors(topNeighbors),
-        bottomNeighbors(bottomNeighbors) {
+        bottomNeighbors(bottomNeighbors),
+        f(func) {
         neighborsCount = topNeighbors.size();
         oriented = true;
     }
@@ -66,7 +69,7 @@ private:
     }
 
     void toppleOriented(int x, int y) {
-        if ((x + y) % 2 == 0) {
+        if (f(x, y)) {
             for (std::pair<int, int> neighbor : topNeighbors) {
                 addSand(x + neighbor.first, y + neighbor.second, grid[{x, y}] / topNeighbors.size());
             }
