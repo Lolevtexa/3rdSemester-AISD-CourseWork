@@ -33,6 +33,7 @@ public:
         } 
         return grid.at(std::make_pair(x, y));
     }
+    
 private:
     void topple(int x, int y) {
         addSand(x, y + 1, grid[std::make_pair(x, y)] / 4);

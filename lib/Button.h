@@ -15,6 +15,7 @@ private:
     sf::Texture texture;
 
     std::function<void()> eventButtonPressed;
+    
 public:
     template<typename Func>
     Button(const std::string& filename, int x, int y, Func func) {
