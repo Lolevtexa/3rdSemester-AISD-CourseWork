@@ -312,8 +312,8 @@ private:
                     }
                 }
             } else {
-                hexagon.setPosition(hexagonGridToPoint(x, y));
-                if (!containsHexagon(hexagon, globalMousePosition - sf::Vector2f(0, getHexagonCell().y / 2.f))) {
+                hexagon.setPosition(hexagonGridToPoint(x, y) - sf::Vector2f(0, getHexagonCell().y / 2.f));
+                if (!containsHexagon(hexagon, globalMousePosition)) {
                     hexagon.setPosition(hexagonGridToPoint(x + 1, y));
                     if (containsHexagon(hexagon, globalMousePosition)) {
                         x++;
@@ -327,8 +327,12 @@ private:
                                 x++;
                                 y--;
                             } else {
-                                x--;
-                                y--;
+                                hexagon.setPosition(hexagonGridToPoint(x, y - 1) - sf::Vector2f(0, getHexagonCell().y / 2.f));
+                                if (containsHexagon(hexagon, globalMousePosition)) {
+                                    y--;
+                                } else {
+                                    y++;
+                                }
                             }
                         }
                     }
@@ -338,6 +342,7 @@ private:
             hexagonSandpile.addSand(x, y, sandNumber);
         }
     }
+
 
     void saveScreenshot(sf::RenderWindow& window) {
         std::string filename = "../screenshots/";
@@ -349,6 +354,7 @@ private:
         texture.update(window);
         texture.copyToImage().saveToFile(filename);
     }
+
 
     sf::Color gradTriangle(int value) const {
         if (value == 0) {
@@ -402,9 +408,11 @@ private:
         return black;
     }
     
+
     sf::Vector2f delta() const {
         return getPosition() + getSize() / 2.f - position;
     }
+
 
     sf::ConvexShape setTopTriangle() const {
         sf::ConvexShape topTriangle(3);
@@ -492,6 +500,7 @@ private:
         }
     }
 
+
     sf::ConvexShape setRectangle() const {
         sf::ConvexShape rectangle(4);
         rectangle.setPoint(0, sf::Vector2f(-getRectangleCell().x / 2.f, -getRectangleCell().y / 2.f));
@@ -550,6 +559,7 @@ private:
             }
         }
     }
+
 
     sf::ConvexShape setHexagon() const {
         sf::ConvexShape hexagon(6);
