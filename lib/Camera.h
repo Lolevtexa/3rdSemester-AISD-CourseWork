@@ -2,6 +2,11 @@
 #include "Libraries.h"
 #include "Sandpile.h"
 
+enum CellShape {
+    TRIANGLE,
+    RECTANGLE
+};
+
 class Camera : 
     public sf::RectangleShape {
 private:
@@ -11,7 +16,9 @@ private:
     static const sf::Color purple;
     static const sf::Color gold;
     
-    Sandpile sandpile;
+    Sandpile triangleSandpile;
+    Sandpile rectangleSandpile;
+    CellShape cellShape;
 
     float cellSize;
     float scale = 1.f;
@@ -32,10 +39,31 @@ private:
 public:
     Camera(sf::Vector2f position, sf::Vector2f size, float cellSize) : 
         cellSize(cellSize),
-        sandpile({{1, 0}, {0, 1}, {-1, 0}, {0, -1}}) {
+        triangleSandpile({{1, 0}, {-1, 0}, {0, 1}}, {{1, 0}, {-1, 0}, {0, -1}}),
+        rectangleSandpile({{1, 0}, {0, 1}, {-1, 0}, {0, -1}}) {
         setPosition(position);
         setSize(size);
         setFillColor(background);
+    }
+
+    void setShape(CellShape cellShape) {
+        this->cellShape = cellShape;
+    }
+
+    void clearGrid() {
+        if (cellShape == TRIANGLE) {
+            triangleSandpile.clearGrid();
+        } else if (cellShape == RECTANGLE) {
+            rectangleSandpile.clearGrid();
+        }
+    }
+
+    void updateGrid() {
+        if (cellShape == TRIANGLE) {
+            triangleSandpile.updateGrid();
+        } else if (cellShape == RECTANGLE) {
+            rectangleSandpile.updateGrid();
+        }
     }
 
     void eventProcessing(sf::Event& event) {
@@ -123,20 +151,18 @@ public:
 
         if (needAddSand) {
             if (getGlobalBounds().contains(globalMousePosition)) {
-                int x = getGridPosition(globalMousePosition - getHalhCellSize()).x;
-                int y = getGridPosition(globalMousePosition - getHalhCellSize()).y;
-                sandpile.addSand(x, y, func());
+                addSand(globalMousePosition, func());
             }
             needAddSand = false;
         }
 
         if (needClearGrid) {
-            sandpile.clearGrid();
+            rectangleSandpile.clearGrid();
             needClearGrid = false;
         }
 
         if (updateSandpile) {
-            sandpile.updateGrid();
+            rectangleSandpile.updateGrid();
             updateSandpile = false;
         }
 
@@ -169,75 +195,63 @@ public:
     void draw(sf::RenderTarget& target, sf::RenderStates states) const {
         target.draw(static_cast<sf::RectangleShape>(*this), states);
 
-        sf::Vector2i topLeft = getGridPosition(getPosition() - getHalhCellSize());
-        sf::Vector2i bottomRight = getGridPosition(getPosition() + getSize() + getHalhCellSize());
-
-        sf::RectangleShape horizontalLine;
-        horizontalLine.setFillColor(outline);
-        horizontalLine.setPosition(getPosition());
-        horizontalLine.setSize(sf::Vector2f(getSize().x, 2));
-        for (int i = topLeft.y; i <= bottomRight.y; i++) {
-            float x = horizontalLine.getPosition().x;
-            float y = getCoordinates(0, i).y - horizontalLine.getSize().y / 2.f;
-            horizontalLine.setPosition(x, y);
-            target.draw(horizontalLine, states);
+        if (cellShape == TRIANGLE) {
+            drawTriangleSandpile(target, states);
+        } else if (cellShape == RECTANGLE) {
+            drawRectangleSandpile(target, states);
         }
-
-        sf::RectangleShape verticalLine;
-        verticalLine.setFillColor(outline);
-        verticalLine.setPosition(getPosition());
-        verticalLine.setSize(sf::Vector2f(2, getSize().y));
-        for (int i = topLeft.x; i <= bottomRight.x; i++) {
-            float x = getCoordinates(i, 0).x - verticalLine.getSize().x / 2.f;
-            float y = verticalLine.getPosition().y;
-            verticalLine.setPosition(x, y);
-            target.draw(verticalLine, states);
-        }
-
-        sf::CircleShape sand;
-        sand.setRadius(getCellSize() / 2);
-        for (int x = topLeft.x; x < bottomRight.x; x++) {
-            for (int y = topLeft.y; y < bottomRight.y; y++) {
-                if (sandpile.getSandNumber(x, y) > 0) {
-                    sand.setPosition(getCoordinates(x, y).x, getCoordinates(x, y).y);
-                    sand.setFillColor(grad(sandpile.getSandNumber(x, y)));
-                    target.draw(sand, states);
-                }
-            }
-        }
-    }
-
-    void clearGrid() {
-        sandpile.clearGrid();
-    }
-
-    void updateGrid() {
-        sandpile.updateGrid();
     }
 
 private:
-    float getCellSize() const {
-        return cellSize * scale;
+    bool containsTriangle(sf::ConvexShape triangle, sf::Vector2f point) const {
+        sf::Vector2f A = triangle.getPoint(0) + triangle.getPosition();
+        sf::Vector2f B = triangle.getPoint(1) + triangle.getPosition();
+        sf::Vector2f C = triangle.getPoint(2) + triangle.getPosition();
+        sf::Vector2f P = point;
+
+        float AB = (A.x - P.x) * (B.y - P.y) - (B.x - P.x) * (A.y - P.y);
+        float BC = (B.x - P.x) * (C.y - P.y) - (C.x - P.x) * (B.y - P.y);
+        float CA = (C.x - P.x) * (A.y - P.y) - (A.x - P.x) * (C.y - P.y);
+
+        return (AB >= 0 && BC >= 0 && CA >= 0) || (AB <= 0 && BC <= 0 && CA <= 0);
     }
 
-    sf::Vector2f getHalhCellSize() const {
-        return sf::Vector2f(getCellSize(), getCellSize()) / 2.f;
-    }
+    void addSand(sf::Vector2f globalMousePosition, int sandNumber) {
+        if (cellShape == TRIANGLE) {
+            sf::ConvexShape topTriangle = setTopTriangle();
+            sf::ConvexShape bottomTriangle = setBottomTriangle();
 
-    sf::Vector2f getDelta() const {
-        return getPosition() + getSize() / 2.f - position;
-    }
-    
-    sf::Vector2i getGridPosition(sf::Vector2f _mousePosition) const {
-        int x = std::round((_mousePosition - getDelta()).x / getCellSize());
-        int y = std::round((_mousePosition - getDelta()).y / getCellSize());
-        return sf::Vector2i(x, y);
-    }
+            int x = pointToTriangleGrid(globalMousePosition).x;
+            int y = pointToTriangleGrid(globalMousePosition).y;
+            if ((x + y) % 2 == 0) {
+                topTriangle.setPosition(triangleGridToPoint(x, y));
+                if (!containsTriangle(topTriangle, globalMousePosition)) {
+                    bottomTriangle.setPosition(triangleGridToPoint(x + 1, y));
+                    if (containsTriangle(bottomTriangle, globalMousePosition)) {
+                        x++;
+                    } else {
+                        x--;
+                    }
+                }
+            } else {
+                bottomTriangle.setPosition(triangleGridToPoint(x, y));
+                if (!containsTriangle(bottomTriangle, globalMousePosition)) {
+                    topTriangle.setPosition(triangleGridToPoint(x + 1, y));
+                    if (containsTriangle(topTriangle, globalMousePosition)) {
+                        x++;
+                    } else {
+                        x--;
+                    }
+                }
+            }
 
-    sf::Vector2f getCoordinates(int _x, int _y) const {
-        float x = (float)_x * getCellSize() + getDelta().x;
-        float y = (float)_y * getCellSize() + getDelta().y;
-        return sf::Vector2f(x, y);
+            triangleSandpile.addSand(x, y, sandNumber);
+        } else if (cellShape == RECTANGLE) {
+            int x = pointToRectangleGrid(globalMousePosition).x;
+            int y = pointToRectangleGrid(globalMousePosition).y;
+            
+            rectangleSandpile.addSand(x, y, sandNumber);
+        }
     }
 
     void saveScreenshot(sf::RenderWindow& window) {
@@ -276,6 +290,155 @@ private:
         }
 
         return color;
+    }
+    
+    sf::Vector2f delta() const {
+        return getPosition() + getSize() / 2.f - position;
+    }
+
+    sf::ConvexShape setTopTriangle() const {
+        sf::ConvexShape topTriangle(3);
+        topTriangle.setPoint(0, sf::Vector2f(0, -getTriangleCell().y / 2));
+        topTriangle.setPoint(1, sf::Vector2f(getTriangleCell().x, getTriangleCell().y / 2));
+        topTriangle.setPoint(2, sf::Vector2f(-getTriangleCell().x, getTriangleCell().y / 2));
+        topTriangle.setFillColor(background);
+        topTriangle.setOutlineColor(outline);
+        topTriangle.setOutlineThickness(-1.f);
+        return topTriangle;
+    }
+
+    sf::ConvexShape setBottomTriangle() const {
+        sf::ConvexShape bottomTriangle(3);
+        bottomTriangle.setPoint(0, sf::Vector2f(0, getTriangleCell().y / 2));
+        bottomTriangle.setPoint(1, sf::Vector2f(getTriangleCell().x, -getTriangleCell().y / 2));
+        bottomTriangle.setPoint(2, sf::Vector2f(-getTriangleCell().x, -getTriangleCell().y / 2));
+        bottomTriangle.setFillColor(background);
+        bottomTriangle.setOutlineColor(outline);
+        bottomTriangle.setOutlineThickness(-1.f);
+        return bottomTriangle;
+    }
+
+    sf::Vector2f getTriangleCell() const {
+        return sf::Vector2f(cellSize * scale, cellSize * scale * sqrt(3)) / 2.f;
+    }
+
+    sf::Vector2f getTriangleDelta() const {
+        return getPosition() + getSize() / 2.f - position;
+    }
+
+    sf::Vector2i pointToTriangleGrid(sf::Vector2f _mousePosition) const {
+        int x = std::round((_mousePosition - getTriangleDelta()).x / getTriangleCell().x);
+        int y = std::round((_mousePosition - getTriangleDelta()).y / getTriangleCell().y);
+        return sf::Vector2i(x, y);
+    }
+
+    sf::Vector2f triangleGridToPoint(int _x, int _y) const {
+        float x = (float)_x * getTriangleCell().x + getTriangleDelta().x;
+        float y = (float)_y * getTriangleCell().y + getTriangleDelta().y;
+        return sf::Vector2f(x, y);
+    }
+
+    float sandRadiusWithTriangleCell() const {
+        return cellSize * scale * sqrt(3) / 2.f / 3.f;
+    }
+
+    void drawTriangleSandpile(sf::RenderTarget& target, sf::RenderStates states) const {
+        sf::ConvexShape topTriangle = setTopTriangle();
+        sf::ConvexShape bottomTriangle = setBottomTriangle();
+
+        sf::Vector2i topLeft = pointToTriangleGrid(getPosition() - getTriangleCell());
+        sf::Vector2i bottomRight = pointToTriangleGrid(getPosition() + getSize() + getTriangleCell());
+
+        for (int x = topLeft.x; x < bottomRight.x; x++) {
+            for (int y = topLeft.y; y < bottomRight.y; y++) {
+                float _x = triangleGridToPoint(x, y).x;
+                float _y = triangleGridToPoint(x, y).y;
+                if ((x + y) % 2 == 0) {
+                    topTriangle.setPosition(_x, _y);
+                    target.draw(topTriangle, states);
+                } else {
+                    bottomTriangle.setPosition(_x, _y);
+                    target.draw(bottomTriangle, states);
+                }
+            }
+        }
+
+        sf::CircleShape sand(sandRadiusWithTriangleCell());
+        float dx = sandRadiusWithTriangleCell();
+        float dy = sandRadiusWithTriangleCell();
+        for (int x = topLeft.x; x < bottomRight.x; x++) {
+            for (int y = topLeft.y; y < bottomRight.y; y++) {
+                if (triangleSandpile.getSandNumber(x, y) > 0) {
+                    if ((x + y) % 2 == 0) {
+                        dy = sandRadiusWithTriangleCell() - sandRadiusWithTriangleCell() / 2.f;
+                    } else {
+                        dy = sandRadiusWithTriangleCell() + sandRadiusWithTriangleCell() / 2.f;
+                    }
+                    sand.setPosition(triangleGridToPoint(x, y) - sf::Vector2f(dx, dy));
+                    sand.setFillColor(grad(triangleSandpile.getSandNumber(x, y)));
+                    target.draw(sand, states);
+                }
+            }
+        }
+    }
+
+    sf::ConvexShape setRectangle() const {
+        sf::ConvexShape rectangle(4);
+        rectangle.setPoint(0, sf::Vector2f(-getRectangleCell().x / 2.f, -getRectangleCell().y / 2.f));
+        rectangle.setPoint(1, sf::Vector2f(getRectangleCell().x / 2.f, -getRectangleCell().y / 2.f));
+        rectangle.setPoint(2, sf::Vector2f(getRectangleCell().x / 2.f, getRectangleCell().y / 2.f));
+        rectangle.setPoint(3, sf::Vector2f(-getRectangleCell().x / 2.f, getRectangleCell().y / 2.f));
+        rectangle.setFillColor(background);
+        rectangle.setOutlineColor(outline);
+        rectangle.setOutlineThickness(-1.f);
+        return rectangle;
+    }
+
+    sf::Vector2f getRectangleCell() const {
+        return sf::Vector2f(cellSize * scale, cellSize * scale);
+    }
+    
+    sf::Vector2i pointToRectangleGrid(sf::Vector2f point) const {
+        int x = std::round((point - delta()).x / getRectangleCell().x);
+        int y = std::round((point - delta()).y / getRectangleCell().y);
+        return sf::Vector2i(x, y);
+    }
+
+    sf::Vector2f rectangleGridToPoint(int _x, int _y) const {
+        float x = (float)_x * getRectangleCell().x + delta().x;
+        float y = (float)_y * getRectangleCell().y + delta().y;
+        return sf::Vector2f(x, y);
+    }
+
+    float sandRadiusWithRectangleCell() const {
+        return cellSize * scale / 2.f;
+    }
+
+    void drawRectangleSandpile(sf::RenderTarget& target, sf::RenderStates states) const {
+        sf::ConvexShape rectangle = setRectangle();
+
+        sf::Vector2i topLeft = pointToRectangleGrid(getPosition() - getRectangleCell() / 2.f);
+        sf::Vector2i bottomRight = pointToRectangleGrid(getPosition() + getSize() + getRectangleCell() / 2.f);
+
+        for (int x = topLeft.x; x < bottomRight.x; x++) {
+            for (int y = topLeft.y; y < bottomRight.y; y++) {
+                rectangle.setPosition(rectangleGridToPoint(x, y));
+                target.draw(rectangle, states);
+            }
+        }
+
+        sf::CircleShape sand(sandRadiusWithRectangleCell());
+        float dx = sandRadiusWithRectangleCell();
+        float dy = sandRadiusWithRectangleCell();
+        for (int x = topLeft.x; x < bottomRight.x; x++) {
+            for (int y = topLeft.y; y < bottomRight.y; y++) {
+                if (rectangleSandpile.getSandNumber(x, y) > 0) {
+                    sand.setPosition(rectangleGridToPoint(x, y) - sf::Vector2f(dx, dy));
+                    sand.setFillColor(grad(rectangleSandpile.getSandNumber(x, y)));
+                    target.draw(sand, states);
+                }
+            }
+        }
     }
 };
 

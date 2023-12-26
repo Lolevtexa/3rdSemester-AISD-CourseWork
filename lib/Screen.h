@@ -26,6 +26,14 @@ public:
         });
 
         toolBar.addNumberSelection();
+    
+        toolBar.addButton("../assets/images/triangle.png", [this]() {
+            camera.setShape(TRIANGLE);
+        });
+        
+        toolBar.addButton("../assets/images/rectangle.png", [this]() {
+            camera.setShape(RECTANGLE);
+        });
     }
 
     void eventProcessing(sf::Event& event, sf::RenderWindow& window) {
