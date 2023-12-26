@@ -2,7 +2,8 @@
 #include "Libraries.h"
 #include "Constants.h"
 
-class Button : public sf::Drawable{
+class Button : 
+    public sf::Drawable {
 private:
     static const int unpressedAlpha = 127;
     static const int pressedAlpha = 255;

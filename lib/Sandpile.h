@@ -2,7 +2,7 @@
 #include "Libraries.h"
 #include "Constants.h"
 
-class Sandpile{
+class Sandpile {
 private:
     std::map<std::pair<int, int>, int> grid;
     std::set<std::pair<int, int>> unstableCells;

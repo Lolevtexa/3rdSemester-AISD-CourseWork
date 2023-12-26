@@ -4,13 +4,15 @@
 #include "ToolBar.h"
 #include "Camera.h"
 
-class Screen : public sf::Drawable {
+class Screen : 
+    public sf::Drawable {
 private:
     ToolBar toolBar;
     Camera camera;
 
 public:
-    Screen(int toolBarWidth, sf::Vector2f gridSize, sf::RenderWindow& window) : camera(sf::Vector2f(toolBarWidth, 0), sf::Vector2f(gridSize.x - toolBarWidth, gridSize.y), Constants::CELL_SIZE) {
+    Screen(int toolBarWidth, sf::Vector2f gridSize, sf::RenderWindow& window) : 
+        camera(sf::Vector2f(toolBarWidth, 0), sf::Vector2f(gridSize.x - toolBarWidth, gridSize.y), Constants::CELL_SIZE) {
         toolBar.addButton("../assets/images/screenshot.png", [this, &window]() {
             saveScreenshot(window);
         });

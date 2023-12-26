@@ -2,7 +2,8 @@
 #include "Libraries.h"
 #include "Constants.h"
 
-class NumberSelection : public sf::Drawable {
+class NumberSelection : 
+    public sf::Drawable {
 private:
     static const sf::Color background;
     static const sf::Color outline;
@@ -15,7 +16,10 @@ private:
     int maxNumber;
 
 public:
-    NumberSelection(int x, int y, int defaultNumber = 1, int minNumber = 1, int maxNumber = 1000) : number(defaultNumber), minNumber(minNumber), maxNumber(maxNumber) {
+    NumberSelection(int x, int y, int defaultNumber = 1, int minNumber = 1, int maxNumber = 1000) : 
+        number(defaultNumber), 
+        minNumber(minNumber), 
+        maxNumber(maxNumber) {
         numberSelection.setSize(sf::Vector2f(Constants::NUMBER_SELECTION_WIDTH, Constants::NUMBER_SELECTION_HEIGHT));
         numberSelection.setPosition(x, y);
         numberSelection.setFillColor(background);

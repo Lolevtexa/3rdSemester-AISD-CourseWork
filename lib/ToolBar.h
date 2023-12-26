@@ -4,7 +4,8 @@
 #include "Button.h"
 #include "NumberSelection.h"
 
-class ToolBar : public sf::Drawable {
+class ToolBar : 
+    public sf::Drawable {
 private:
     static const sf::Color background;
     static const sf::Color outline;

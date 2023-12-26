@@ -2,7 +2,8 @@
 #include "Libraries.h"
 #include "Sandpile.h"
 
-class Camera : public sf::RectangleShape {
+class Camera : 
+    public sf::RectangleShape {
 private:
     static const sf::Color background;
     static const sf::Color outline;
@@ -29,7 +30,8 @@ private:
     bool moveRight = false;
 
 public:
-    Camera(sf::Vector2f position, sf::Vector2f size, float cellSize) : cellSize(cellSize) {
+    Camera(sf::Vector2f position, sf::Vector2f size, float cellSize) : 
+        cellSize(cellSize) {
         setPosition(position);
         setSize(size);
         setFillColor(background);
