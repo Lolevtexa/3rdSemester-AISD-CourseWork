@@ -7,7 +7,7 @@
             "command": "g++",
             "args":[
                 "-g", "src/*.cpp",
-                "-o", "SandPile.out",
+                "-o", "Sandpile.out",
                 "-lsfml-graphics", "-lsfml-window", "-lsfml-system"
             ],
             "group": {

@@ -1,6 +1,6 @@
 #pragma once
 #include "Libraries.h"
-#include "SandPile.h"
+#include "Sandpile.h"
 
 class Camera : public sf::RectangleShape {
 private:
@@ -10,7 +10,7 @@ private:
     static const sf::Color purple;
     static const sf::Color gold;
     
-    SandPile sandPile;
+    Sandpile sandpile;
 
     float cellSize;
     float scale = 1.f;
@@ -18,7 +18,7 @@ private:
     sf::Vector2f position;
 
     bool needAddSand = false;
-    bool updateSandPile = false;
+    bool updateSandpile = false;
     bool needClearGrid = false;
     bool updatePosition = false;
     bool updateScale = false;
@@ -57,7 +57,7 @@ public:
 
         if (event.type == sf::Event::KeyPressed) {
             if (event.key.code == sf::Keyboard::Space) {
-                updateSandPile = true;
+                updateSandpile = true;
             }
             if (event.key.code == sf::Keyboard::C) {
                 needClearGrid = true;
@@ -122,19 +122,19 @@ public:
             if (getGlobalBounds().contains(globalMousePosition)) {
                 int x = getGridPosition(globalMousePosition - getHalhCellSize()).x;
                 int y = getGridPosition(globalMousePosition - getHalhCellSize()).y;
-                sandPile.addSand(x, y, func());
+                sandpile.addSand(x, y, func());
             }
             needAddSand = false;
         }
 
         if (needClearGrid) {
-            sandPile.clearGrid();
+            sandpile.clearGrid();
             needClearGrid = false;
         }
 
-        if (updateSandPile) {
-            sandPile.updateGrid();
-            updateSandPile = false;
+        if (updateSandpile) {
+            sandpile.updateGrid();
+            updateSandpile = false;
         }
 
         if (updateScale) {
@@ -195,9 +195,9 @@ public:
         sand.setRadius(getCellSize() / 2);
         for (int x = topLeft.x; x < bottomRight.x; x++) {
             for (int y = topLeft.y; y < bottomRight.y; y++) {
-                if (sandPile.getSandNumber(x, y) > 0) {
+                if (sandpile.getSandNumber(x, y) > 0) {
                     sand.setPosition(getCoordinates(x, y).x, getCoordinates(x, y).y);
-                    sand.setFillColor(grad(sandPile.getSandNumber(x, y)));
+                    sand.setFillColor(grad(sandpile.getSandNumber(x, y)));
                     target.draw(sand, states);
                 }
             }
@@ -205,11 +205,11 @@ public:
     }
 
     void clearGrid() {
-        sandPile.clearGrid();
+        sandpile.clearGrid();
     }
 
     void updateGrid() {
-        sandPile.updateGrid();
+        sandpile.updateGrid();
     }
 
 private:
