@@ -173,12 +173,12 @@ public:
         }
 
         if (needClearGrid) {
-            rectangleSandpile.clearGrid();
+            clearGrid();
             needClearGrid = false;
         }
 
         if (updateSandpile) {
-            rectangleSandpile.updateGrid();
+            updateGrid();
             updateSandpile = false;
         }
 
